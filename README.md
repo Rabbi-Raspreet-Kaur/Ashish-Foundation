@@ -1,4 +1,4 @@
-# ashish-foundation
+# Ashish-Foundation
 
 An impactful digital platform designed to streamline community assistance, event management, and social welfare initiatives for the Ashish Foundation. Built with modern web technologies to ensure low latency, accessibility, and smooth user interactions.
 
