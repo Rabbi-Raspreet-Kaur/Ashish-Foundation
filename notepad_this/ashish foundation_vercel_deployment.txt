@@ -1,0 +1,12 @@
+cd C:\Users\Rabbi\Desktop\ashish_foundation
+npx vercel --prod
+
+
+
+
+for ashish foundation changes using antigravity, then to re-deploy it, use this in cmd
+
+
+
+ https://ashishfoundation.vercel.app/
+
