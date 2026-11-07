@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, X, Heart, LogIn, LogOut, User as UserIcon } from "lucide-react";
+import { Menu, X, Heart, LogIn, LogOut, User as UserIcon, LayoutDashboard } from "lucide-react";
 import { NAV_LINKS } from "@/lib/constants";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/components/AuthProvider";
@@ -38,21 +38,21 @@ export default function Navbar() {
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
           scrolled
             ? "bg-forest/95 glass shadow-lg py-3"
-            : "bg-transparent py-5"
+            : "bg-transparent py-4 md:py-5"
         }`}
         role="banner"
       >
         <nav
-          className="container-wide mx-auto flex items-center justify-between px-4 md:px-8"
+          className="container-wide mx-auto flex items-center justify-between px-4 sm:px-6 md:px-8"
           aria-label="Main navigation"
         >
           {/* Logo */}
           <Link
             href="/"
-            className="flex items-center gap-3 group"
+            className="flex items-center gap-2.5 sm:gap-3 group flex-shrink-0"
             aria-label="Ashish Foundation — Home"
           >
-            <div className="relative w-10 h-10 md:w-12 md:h-12 rounded-full overflow-hidden bg-white/10 flex-shrink-0">
+            <div className="relative w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full overflow-hidden bg-white/10 flex-shrink-0 border border-white/15">
               <Image
                 src="/images/logo.png"
                 alt="Ashish Foundation Logo"
@@ -63,13 +63,13 @@ export default function Navbar() {
             </div>
             <div className="flex flex-col">
               <span
-                className="text-lg md:text-xl font-semibold tracking-tight text-white transition-colors duration-300"
+                className="text-base sm:text-lg md:text-xl font-semibold tracking-tight text-white transition-colors duration-300 leading-tight"
                 style={{ fontFamily: "var(--font-heading)" }}
               >
                 Ashish Foundation
               </span>
               <span
-                className={`text-[10px] md:text-xs tracking-widest uppercase transition-colors duration-300 ${
+                className={`hidden sm:inline text-[10px] md:text-xs tracking-widest uppercase transition-colors duration-300 ${
                   scrolled ? "text-white/70" : "text-white/60"
                 }`}
               >
@@ -90,7 +90,7 @@ export default function Navbar() {
               </Link>
             ))}
 
-            {/* Common Login button for visitors */}
+            {/* Common Login button for visitors (if not logged in) */}
             {!loading && !user && (
               <Link
                 href="/login"
@@ -124,29 +124,39 @@ export default function Navbar() {
               </>
             )}
 
-            {/* Logout button for authenticated admins (No Admin Dashboard link on public pages) */}
+            {/* Admin Dashboard & Logout for authenticated admins */}
             {!loading && user && isAdmin && (
-              <button
-                onClick={() => logout()}
-                className="ml-2 inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium rounded-full bg-white/10 border border-white/20 text-white/90 hover:bg-white/20 transition-all duration-300"
-                title={`Signed in as ${user.email} - Click to Logout`}
-              >
-                <LogOut className="w-3.5 h-3.5 text-saffron" />
-                Logout
-              </button>
+              <>
+                <Link
+                  href="/admin/dashboard"
+                  className="ml-2 inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-full bg-saffron/20 border border-saffron/40 text-saffron hover:bg-saffron hover:text-white transition-all duration-300 shadow-sm"
+                  title="Open Admin Command Center"
+                >
+                  <LayoutDashboard className="w-3.5 h-3.5" />
+                  <span>Admin Dashboard</span>
+                </Link>
+                <button
+                  onClick={() => logout()}
+                  className="ml-1.5 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full bg-white/10 border border-white/20 text-white/90 hover:bg-white/20 transition-all duration-300"
+                  title={`Signed in as Administrator (${user.email}) - Click to Logout`}
+                >
+                  <LogOut className="w-3.5 h-3.5 text-saffron" />
+                  Logout
+                </button>
+              </>
             )}
 
             <Link
               href="/#donate"
-              className="ml-3 inline-flex items-center gap-2 px-6 py-2.5 bg-saffron hover:bg-saffron-dark text-white font-semibold text-sm rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-saffron/30 hover:scale-105"
+              className="ml-3 inline-flex items-center gap-2 px-5 py-2.5 bg-saffron hover:bg-saffron-dark text-white font-semibold text-sm rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-saffron/30 hover:scale-105"
             >
               <Heart className="w-4 h-4" />
               Donate
             </Link>
           </div>
 
-          {/* Mobile: Donate + Login/Dashboard + Hamburger */}
-          <div className="flex lg:hidden items-center gap-2.5">
+          {/* Mobile: Actions + Hamburger */}
+          <div className="flex lg:hidden items-center gap-2">
             {!loading && !user && (
               <Link
                 href="/login"
@@ -158,27 +168,32 @@ export default function Navbar() {
               </Link>
             )}
 
-            {!loading && user && !isAdmin && (
+            {!loading && user && (
               <Link
-                href="/user/dashboard"
+                href={isAdmin ? "/admin/dashboard" : "/user/dashboard"}
                 className="inline-flex items-center gap-1 px-2.5 py-1.5 border border-white/30 text-white text-xs font-medium rounded-full hover:bg-white/10 transition-colors"
-                title="My Dashboard"
+                title={isAdmin ? "Admin Dashboard" : "My Dashboard"}
               >
-                <UserIcon className="w-3 h-3 text-saffron" />
-                <span>Dashboard</span>
+                {isAdmin ? (
+                  <LayoutDashboard className="w-3 h-3 text-saffron" />
+                ) : (
+                  <UserIcon className="w-3 h-3 text-saffron" />
+                )}
+                <span>{isAdmin ? "Admin" : "Portal"}</span>
               </Link>
             )}
 
             <Link
               href="/#donate"
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-saffron hover:bg-saffron-dark text-white font-semibold text-xs rounded-full transition-all duration-300"
+              className="inline-flex items-center gap-1 px-3 py-1.5 bg-saffron hover:bg-saffron-dark text-white font-semibold text-xs rounded-full transition-all duration-300"
             >
-              <Heart className="w-3.5 h-3.5" />
-              Donate
+              <Heart className="w-3 h-3" />
+              <span>Donate</span>
             </Link>
+
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="p-2 rounded-lg text-white hover:bg-white/10 transition-colors"
+              className="p-1.5 rounded-lg text-white hover:bg-white/10 transition-colors"
               aria-label={menuOpen ? "Close menu" : "Open menu"}
               aria-expanded={menuOpen}
             >
@@ -279,30 +294,47 @@ export default function Navbar() {
                 </>
               )}
 
-              {/* Admin logout option on public pages (No Admin Dashboard link on public pages) */}
+              {/* Admin Dashboard & Logout option for admins */}
               {!loading && user && isAdmin && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.35 }}
-                >
-                  <button
-                    onClick={() => {
-                      logout();
-                      setMenuOpen(false);
-                    }}
-                    className="px-6 py-2.5 rounded-full bg-white/10 border border-white/20 text-white text-base font-medium hover:bg-white/20 transition-all duration-300 flex items-center gap-2"
+                <>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.35 }}
                   >
-                    <LogOut className="w-4 h-4 text-saffron" />
-                    Logout ({user.email})
-                  </button>
-                </motion.div>
+                    <Link
+                      href="/admin/dashboard"
+                      onClick={() => setMenuOpen(false)}
+                      className="px-6 py-2.5 rounded-full bg-saffron/20 border border-saffron/40 text-saffron hover:bg-saffron hover:text-white text-base font-semibold transition-all duration-300 flex items-center gap-2"
+                    >
+                      <LayoutDashboard className="w-4 h-4" />
+                      Admin Dashboard
+                    </Link>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.38 }}
+                  >
+                    <button
+                      onClick={() => {
+                        logout();
+                        setMenuOpen(false);
+                      }}
+                      className="px-5 py-2 rounded-full text-white/70 hover:text-white text-sm transition-colors flex items-center gap-1.5"
+                    >
+                      <LogOut className="w-4 h-4 text-saffron" />
+                      Logout ({user.email})
+                    </button>
+                  </motion.div>
+                </>
               )}
 
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
+                transition={{ delay: 0.42 }}
                 className="mt-2"
               >
                 <Link

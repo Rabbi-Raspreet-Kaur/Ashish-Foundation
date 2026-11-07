@@ -81,11 +81,11 @@ export default function SignupPage() {
       >
         <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-10">
           <Link
-            href="/"
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-charcoal-light hover:text-forest transition-colors mb-6"
+            href="/login"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-charcoal-light hover:text-forest transition-colors mb-6"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            Back to Public Website
+            Back to Login
           </Link>
 
           <div className="flex flex-col items-center mb-6">

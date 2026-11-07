@@ -4,10 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
-    "test": "node scripts/validate-qr.mjs",
+    "test": "node --experimental-strip-types scripts/test-auth-and-routes.mjs && node scripts/validate-qr.mjs",
+    "test:auth": "node --experimental-strip-types scripts/test-auth-and-routes.mjs",
     "validate:qr": "node scripts/validate-qr.mjs"
   },
   "dependencies": {

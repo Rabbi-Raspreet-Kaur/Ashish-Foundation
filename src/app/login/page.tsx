@@ -12,16 +12,22 @@ import {
   Eye,
   EyeOff,
   AlertCircle,
-  ArrowLeft,
   CheckCircle2,
   KeyRound,
   X,
+  User as UserIcon,
+  ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
+import { type UserRole } from "@/lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
   const { login, user, isAdmin } = useAuth();
+
+  // Role selection state via radio buttons: 'user' | 'admin'
+  const [selectedRole, setSelectedRole] = useState<UserRole>("user");
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -50,19 +56,23 @@ export default function LoginPage() {
     setLoading(true);
 
     setTimeout(() => {
-      const result = login(email, password);
+      const result = login(email, password, selectedRole);
       if (result.success && result.user) {
-        // Strict role-based redirection
         if (result.user.role === "admin") {
           router.push("/admin/dashboard");
         } else {
           router.push("/user/dashboard");
         }
       } else {
-        setError(result.error || "Invalid email or password. Please try again.");
+        setError(
+          result.error ||
+            (selectedRole === "admin"
+              ? "Invalid Admin credentials. Please check your admin email and password."
+              : "Invalid User credentials. If you do not have an account, please create one.")
+        );
       }
       setLoading(false);
-    }, 350);
+    }, 250);
   };
 
   const handleForgotSubmit = (e: React.FormEvent) => {
@@ -72,64 +82,144 @@ export default function LoginPage() {
   };
 
   return (
-    <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-forest via-forest-dark to-charcoal relative overflow-hidden p-4">
+    <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-forest via-forest-dark to-charcoal relative overflow-x-hidden p-4 sm:p-6 lg:p-8">
       {/* Decorative background blurs */}
       <div className="absolute inset-0 opacity-10 pointer-events-none">
-        <div className="absolute top-20 right-20 w-96 h-96 rounded-full bg-green blur-3xl" />
-        <div className="absolute bottom-20 left-20 w-80 h-80 rounded-full bg-saffron blur-3xl" />
+        <div className="absolute top-10 right-10 w-80 md:w-96 h-80 md:h-96 rounded-full bg-green blur-3xl" />
+        <div className="absolute bottom-10 left-10 w-72 md:w-80 h-72 md:h-80 rounded-full bg-saffron blur-3xl" />
       </div>
 
       <motion.div
-        initial={{ opacity: 0, y: 30 }}
+        initial={{ opacity: 0, y: 25 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.4 }}
         className="relative z-10 w-full max-w-md mx-auto"
       >
-        <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-10 border border-forest/5">
-          {/* Back link */}
-          <div className="flex items-center justify-between mb-6">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-charcoal-light hover:text-forest transition-colors"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              Public Website
-            </Link>
-          </div>
-
+        <div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 md:p-10 border border-forest/10 backdrop-blur-sm">
           {/* Logo & Heading */}
           <div className="flex flex-col items-center mb-6 text-center">
-            <Link href="/" className="flex items-center gap-3 mb-3">
-              <div className="relative w-12 h-12 rounded-full overflow-hidden bg-forest/5 flex-shrink-0">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="relative w-12 h-12 rounded-full overflow-hidden bg-forest/5 flex-shrink-0 border border-forest/10">
                 <Image
                   src="/images/logo.png"
                   alt="Ashish Foundation Logo"
                   fill
                   className="object-contain p-0.5"
+                  priority
                 />
               </div>
               <span
-                className="text-xl font-semibold text-forest tracking-tight"
+                className="text-xl sm:text-2xl font-bold text-forest tracking-tight"
                 style={{ fontFamily: "var(--font-heading)" }}
               >
                 Ashish Foundation
               </span>
-            </Link>
+            </div>
             <h1
               className="text-2xl font-bold text-forest"
               style={{ fontFamily: "var(--font-heading)" }}
             >
               Account Login
             </h1>
-            <p className="text-xs text-charcoal-light mt-1">
-              Sign in with your email and password to access your portal
+            <p className="text-xs sm:text-sm text-charcoal-light mt-1">
+              Select your role and sign in to access the foundation platform
             </p>
+          </div>
+
+          {/* Role Selection using Radio Buttons */}
+          <div className="mb-5">
+            <label className="block text-xs font-bold text-charcoal uppercase tracking-wider mb-2">
+              Select Role <span className="text-terracotta">*</span>
+            </label>
+            <div
+              className="grid grid-cols-2 gap-3"
+              role="radiogroup"
+              aria-label="Select Account Role"
+            >
+              {/* Option 1: User */}
+              <label
+                htmlFor="role-user"
+                className={`relative flex items-center gap-3 p-3 sm:p-3.5 rounded-2xl border-2 cursor-pointer transition-all duration-200 select-none ${
+                  selectedRole === "user"
+                    ? "border-forest bg-forest/5 shadow-sm"
+                    : "border-forest/10 hover:border-forest/30 bg-offwhite/50"
+                }`}
+              >
+                <input
+                  id="role-user"
+                  type="radio"
+                  name="auth-role"
+                  value="user"
+                  checked={selectedRole === "user"}
+                  onChange={() => {
+                    setSelectedRole("user");
+                    setError("");
+                  }}
+                  className="sr-only"
+                />
+                <div
+                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                    selectedRole === "user" ? "border-forest bg-forest" : "border-charcoal-light/40"
+                  }`}
+                >
+                  {selectedRole === "user" && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-xs sm:text-sm font-bold text-forest flex items-center gap-1.5">
+                    <UserIcon className="w-3.5 h-3.5 text-forest" />
+                    User
+                  </span>
+                  <span className="text-[10px] text-charcoal-light/70 truncate">
+                    Supporter / Member
+                  </span>
+                </div>
+              </label>
+
+              {/* Option 2: Admin */}
+              <label
+                htmlFor="role-admin"
+                className={`relative flex items-center gap-3 p-3 sm:p-3.5 rounded-2xl border-2 cursor-pointer transition-all duration-200 select-none ${
+                  selectedRole === "admin"
+                    ? "border-saffron bg-saffron/10 shadow-sm"
+                    : "border-forest/10 hover:border-saffron/40 bg-offwhite/50"
+                }`}
+              >
+                <input
+                  id="role-admin"
+                  type="radio"
+                  name="auth-role"
+                  value="admin"
+                  checked={selectedRole === "admin"}
+                  onChange={() => {
+                    setSelectedRole("admin");
+                    setError("");
+                  }}
+                  className="sr-only"
+                />
+                <div
+                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                    selectedRole === "admin" ? "border-saffron bg-saffron" : "border-charcoal-light/40"
+                  }`}
+                >
+                  {selectedRole === "admin" && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-xs sm:text-sm font-bold text-forest flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-saffron" />
+                    Admin
+                  </span>
+                  <span className="text-[10px] text-charcoal-light/70 truncate">
+                    Command Portal
+                  </span>
+                </div>
+              </label>
+            </div>
           </div>
 
           {/* Error Banner */}
           {error && (
             <motion.div
-              initial={{ opacity: 0, y: -10 }}
+              initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               className="flex items-center gap-2 p-3.5 mb-5 bg-red-50 border border-red-200 rounded-xl text-red-600 text-xs font-medium"
             >
@@ -138,7 +228,7 @@ export default function LoginPage() {
             </motion.div>
           )}
 
-          {/* Common Login Form */}
+          {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label
@@ -157,7 +247,7 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="your.email@example.com"
                   autoComplete="email"
-                  className="w-full pl-10 pr-4 py-3 bg-offwhite border border-forest/10 rounded-xl text-sm text-charcoal placeholder:text-charcoal-light/40 focus:outline-none focus:border-green focus:ring-2 focus:ring-green/15 transition-all"
+                  className="w-full pl-10 pr-4 py-3 bg-offwhite border border-forest/15 rounded-xl text-sm text-charcoal placeholder:text-charcoal-light/40 focus:outline-none focus:border-green focus:ring-2 focus:ring-green/15 transition-all"
                 />
               </div>
             </div>
@@ -170,17 +260,19 @@ export default function LoginPage() {
                 >
                   Password
                 </label>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setForgotEmail(email);
-                    setForgotSent(false);
-                    setShowForgotModal(true);
-                  }}
-                  className="text-xs text-saffron hover:text-saffron-dark font-medium transition-colors"
-                >
-                  Forgot password?
-                </button>
+                {selectedRole === "user" && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setForgotEmail(email);
+                      setForgotSent(false);
+                      setShowForgotModal(true);
+                    }}
+                    className="text-xs text-saffron hover:text-saffron-dark font-medium transition-colors"
+                  >
+                    Forgot password?
+                  </button>
+                )}
               </div>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-charcoal-light/60" />
@@ -192,12 +284,12 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
                   autoComplete="current-password"
-                  className="w-full pl-10 pr-11 py-3 bg-offwhite border border-forest/10 rounded-xl text-sm text-charcoal placeholder:text-charcoal-light/40 focus:outline-none focus:border-green focus:ring-2 focus:ring-green/15 transition-all"
+                  className="w-full pl-10 pr-11 py-3 bg-offwhite border border-forest/15 rounded-xl text-sm text-charcoal placeholder:text-charcoal-light/40 focus:outline-none focus:border-green focus:ring-2 focus:ring-green/15 transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-charcoal-light/60 hover:text-charcoal transition-colors"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-charcoal-light/60 hover:text-charcoal transition-colors p-1"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -208,27 +300,27 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 flex items-center justify-center gap-2 px-6 py-3.5 bg-forest hover:bg-forest-light text-white font-semibold rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-forest/25 disabled:opacity-60 disabled:cursor-not-allowed text-sm"
+              className="w-full mt-3 flex items-center justify-center gap-2 px-6 py-3.5 bg-forest hover:bg-forest-light text-white font-semibold rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-forest/25 disabled:opacity-60 disabled:cursor-not-allowed text-sm"
             >
               {loading ? (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
                   <LogIn className="w-4 h-4" />
-                  Sign In
+                  Sign In as {selectedRole === "admin" ? "Admin" : "User"}
                 </>
               )}
             </button>
           </form>
 
-          {/* Registration link */}
-          <div className="mt-6 pt-5 border-t border-forest/5 text-center text-xs text-charcoal-light">
-            Don&apos;t have an account?{" "}
+          {/* Registration link for regular users */}
+          <div className="mt-6 pt-5 border-t border-forest/10 text-center text-xs text-charcoal-light">
+            Don&apos;t have an account yet?{" "}
             <Link
               href="/signup"
-              className="text-forest font-semibold hover:text-green transition-colors inline-block ml-1"
+              className="text-forest font-bold hover:text-green transition-colors inline-block ml-1 underline"
             >
-              Create Account
+              Create User Account
             </Link>
           </div>
         </div>

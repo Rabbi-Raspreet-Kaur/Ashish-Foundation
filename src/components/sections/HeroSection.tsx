@@ -29,7 +29,7 @@ export default function HeroSection() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 container-narrow mx-auto px-4 md:px-8 text-center pt-20">
+      <div className="relative z-10 container-narrow mx-auto px-4 sm:px-6 md:px-8 text-center pt-28 pb-16 md:pt-36 md:pb-24">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -45,7 +45,7 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
-          className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] tracking-tight mb-6"
+          className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.15] tracking-tight mb-6"
           style={{
             fontFamily: "var(--font-heading)",
             textShadow: "0 2px 20px rgba(0,0,0,0.5)",

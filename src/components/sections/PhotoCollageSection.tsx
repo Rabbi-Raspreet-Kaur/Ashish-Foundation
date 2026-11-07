@@ -18,7 +18,7 @@ export default function PhotoCollageSection() {
       <div className="container-wide mx-auto">
         <SectionHeading title="Our Work in Action" subtitle="A glimpse of Ashish Foundation on-the-ground impact across Ayodhya and surrounding communities." light />
         <ScrollReveal>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 auto-rows-[220px] gap-3 md:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 auto-rows-[170px] sm:auto-rows-[200px] md:auto-rows-[220px] gap-3 md:gap-4">
             {COLLAGE_PHOTOS.map((photo, i) => (
               <div key={i} className={`relative overflow-hidden rounded-2xl group cursor-pointer ${photo.span}`}>
                 <Image src={photo.src} alt={photo.alt} fill className="object-cover transition-transform duration-700 group-hover:scale-110" loading={i === 0 ? "eager" : "lazy"} />

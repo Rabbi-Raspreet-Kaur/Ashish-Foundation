@@ -22,21 +22,68 @@ export interface AuthSession {
 }
 
 const USERS_KEY = "af_users";
-const SESSION_KEY = "af_session";
+export const SESSION_KEY = "af_session";
 
 // In-memory fallback for SSR and test environments
 let memoryUsers: User[] = [];
 let memorySession: AuthSession | null = null;
 
-// Admin configuration: Server/Env or default verified admin
-export const ADMIN_CONFIG = {
-  id: "admin-001",
+/**
+ * Hardcoded Admin Credentials
+ * Specifically hardcoded in the authentication logic for admin access testing.
+ */
+export const HARDCODED_ADMIN = {
+  id: "admin-master-001",
   name: "Ashish Foundation Admin",
   email: (typeof process !== "undefined" && process.env?.NEXT_PUBLIC_ADMIN_EMAIL) || "admin@ashishfoundation.org",
-  // Default fallback password for local demo/development
+  // Fallback default password for verified admin testing
   password: (typeof process !== "undefined" && process.env?.NEXT_PUBLIC_ADMIN_PASSWORD) || "admin123",
   role: "admin" as const,
 };
+
+// Backwards-compatible export
+export const ADMIN_CONFIG = HARDCODED_ADMIN;
+
+/** Helper to set session cookie on browser */
+export function setSessionCookie(session: AuthSession): void {
+  if (typeof document === "undefined") return;
+  try {
+    const encoded = encodeURIComponent(JSON.stringify(session));
+    // 7 days expiration
+    const maxAge = 7 * 24 * 60 * 60;
+    document.cookie = `${SESSION_KEY}=${encoded}; path=/; max-age=${maxAge}; SameSite=Lax`;
+  } catch (err) {
+    console.warn("Failed to set session cookie:", err);
+  }
+}
+
+/** Helper to clear session cookie */
+export function clearSessionCookie(): void {
+  if (typeof document === "undefined") return;
+  try {
+    document.cookie = `${SESSION_KEY}=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
+  } catch (err) {
+    console.warn("Failed to clear session cookie:", err);
+  }
+}
+
+/** Helper to read session cookie from document.cookie */
+export function getSessionCookie(): AuthSession | null {
+  if (typeof document === "undefined") return null;
+  try {
+    const match = document.cookie.match(new RegExp("(^|;\\s*)" + SESSION_KEY + "=([^;]*)"));
+    if (!match || !match[2]) return null;
+    const decoded = decodeURIComponent(match[2]);
+    const parsed = JSON.parse(decoded);
+    if (parsed && typeof parsed === "object" && parsed.role && parsed.email) {
+      if (parsed.role !== "admin" && parsed.role !== "user") {
+        parsed.role = "user";
+      }
+      return parsed as AuthSession;
+    }
+  } catch {}
+  return null;
+}
 
 function getUsers(): User[] {
   if (typeof window === "undefined") return memoryUsers;
@@ -57,53 +104,24 @@ function setUsers(users: User[]): void {
 }
 
 /**
- * Seed default admin account if not already present.
- * Ensures the admin role is explicitly assigned and existing user accounts retain 'user' role.
- */
-export function seedAdmin(): void {
-  const users = getUsers();
-  const existingAdminIdx = users.findIndex(
-    (u) => u.email.toLowerCase() === ADMIN_CONFIG.email.toLowerCase()
-  );
-
-  if (existingAdminIdx === -1) {
-    users.push({
-      id: ADMIN_CONFIG.id,
-      name: ADMIN_CONFIG.name,
-      email: ADMIN_CONFIG.email.toLowerCase(),
-      password: ADMIN_CONFIG.password,
-      role: "admin",
-      createdAt: new Date().toISOString(),
-    });
-    setUsers(users);
-  } else {
-    // Ensure the designated admin email always has the admin role
-    if (users[existingAdminIdx].role !== "admin") {
-      users[existingAdminIdx].role = "admin";
-      setUsers(users);
-    }
-  }
-}
-
-/**
  * Public registration: ALWAYS assigns role = 'user'.
- * Prevents privilege escalation and payload tampering.
+ * Prevents privilege escalation and registers standard users in the database / local store.
+ * Regular user credentials are NOT hardcoded.
  */
 export function signup(data: {
   name: string;
   email: string;
   password: string;
 }): { success: boolean; error?: string; user?: AuthSession } {
-  seedAdmin();
   const users = getUsers();
   const emailNorm = data.email.trim().toLowerCase();
 
   if (users.find((u) => u.email.toLowerCase() === emailNorm)) {
-    return { success: false, error: "An account with this email already exists." };
+    return { success: false, error: "An account with this email already exists. Please sign in." };
   }
 
-  if (emailNorm === ADMIN_CONFIG.email.toLowerCase()) {
-    return { success: false, error: "This email address is reserved." };
+  if (emailNorm === HARDCODED_ADMIN.email.toLowerCase()) {
+    return { success: false, error: "This email address is reserved for system administration." };
   }
 
   if (data.password.length < 6) {
@@ -111,11 +129,11 @@ export function signup(data: {
   }
 
   const newUser: User = {
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
+    id: "usr-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
     name: data.name.trim(),
     email: emailNorm,
     password: data.password,
-    role: "user", // strictly enforce 'user' role for all public signups
+    role: "user", // strictly enforce 'user' role for all public user signups
     createdAt: new Date().toISOString(),
   };
 
@@ -134,43 +152,98 @@ export function signup(data: {
     try {
       localStorage.setItem(SESSION_KEY, JSON.stringify(session));
     } catch {}
+    setSessionCookie(session);
   }
 
   return { success: true, user: session };
 }
 
 /**
- * Log in an existing user or admin
+ * Log in an existing user or admin based on selected role
+ * 
+ * - If selectedRole is "admin":
+ *   Authenticates directly against HARDCODED_ADMIN credentials for admin access testing.
+ * 
+ * - If selectedRole is "user":
+ *   User credentials are NOT hardcoded. Regular users are authenticated against the registered user
+ *   database / backend store.
  */
 export function login(
   email: string,
-  password: string
+  password: string,
+  selectedRole: UserRole = "user"
 ): {
   success: boolean;
   error?: string;
   user?: AuthSession;
 } {
-  seedAdmin();
-  const users = getUsers();
   const emailNorm = email.trim().toLowerCase();
+  const passNorm = password;
 
+  // 1. Role = ADMIN: Check directly against hardcoded Admin credentials
+  if (selectedRole === "admin") {
+    const isEmailValid = emailNorm === HARDCODED_ADMIN.email.toLowerCase();
+    const isPasswordValid = passNorm === HARDCODED_ADMIN.password;
+
+    if (!isEmailValid || !isPasswordValid) {
+      return {
+        success: false,
+        error: "Invalid Admin credentials. Please check your admin email and password.",
+      };
+    }
+
+    const session: AuthSession = {
+      userId: HARDCODED_ADMIN.id,
+      email: HARDCODED_ADMIN.email,
+      name: HARDCODED_ADMIN.name,
+      role: "admin",
+    };
+
+    memorySession = session;
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      } catch {}
+      setSessionCookie(session);
+    }
+
+    return { success: true, user: session };
+  }
+
+  // 2. Role = USER: Check dynamically against registered users in database / store (NOT hardcoded)
+  const users = getUsers();
   const user = users.find(
-    (u) => u.email.toLowerCase() === emailNorm && u.password === password
+    (u) => u.email.toLowerCase() === emailNorm && u.password === passNorm
   );
 
   if (!user) {
-    return { success: false, error: "Invalid email or password." };
+    // Check if user entered admin email with user role selected
+    if (emailNorm === HARDCODED_ADMIN.email.toLowerCase()) {
+      return {
+        success: false,
+        error: "This is an administrator account. Please select the 'Admin' role option to log in.",
+      };
+    }
+
+    return {
+      success: false,
+      error: "Invalid User credentials. If you do not have an account, please create one.",
+    };
   }
 
-  // Double check admin role enforcement: only verified admin email gets admin
-  const resolvedRole: UserRole =
-    user.email.toLowerCase() === ADMIN_CONFIG.email.toLowerCase() ? "admin" : (user.role || "user");
+  // Double check admin role enforcement: regular user login cannot grant admin role
+  if (user.role === "admin" || emailNorm === HARDCODED_ADMIN.email.toLowerCase()) {
+    return {
+      success: false,
+      error: "This is an administrator account. Please select the 'Admin' role option to log in.",
+    };
+  }
 
   const session: AuthSession = {
     userId: user.id,
     email: user.email,
     name: user.name,
-    role: resolvedRole,
+    role: "user",
   };
 
   memorySession = session;
@@ -178,31 +251,45 @@ export function login(
     try {
       localStorage.setItem(SESSION_KEY, JSON.stringify(session));
     } catch {}
+    setSessionCookie(session);
   }
 
   return { success: true, user: session };
 }
 
-/** Log out and clear session */
+/** Log out and clear all sessions and cookies */
 export function logout(): void {
   memorySession = null;
+  clearSessionCookie();
   if (typeof window === "undefined") return;
   try {
     localStorage.removeItem(SESSION_KEY);
   } catch {}
 }
 
-/** Get current authenticated session */
+/** Get current authenticated session from localStorage or session cookie */
 export function getCurrentUser(): AuthSession | null {
   if (typeof window === "undefined") return memorySession;
   try {
     const raw = localStorage.getItem(SESSION_KEY);
-    if (!raw) return memorySession;
-    const session: AuthSession = JSON.parse(raw);
-    if (session.role !== "admin" && session.role !== "user") {
-      session.role = "user";
+    if (raw) {
+      const session: AuthSession = JSON.parse(raw);
+      if (session.role !== "admin" && session.role !== "user") {
+        session.role = "user";
+      }
+      // Ensure session cookie is in sync
+      setSessionCookie(session);
+      return session;
     }
-    return session;
+
+    // Fallback: check session cookie
+    const cookieSession = getSessionCookie();
+    if (cookieSession) {
+      localStorage.setItem(SESSION_KEY, JSON.stringify(cookieSession));
+      return cookieSession;
+    }
+
+    return memorySession;
   } catch {
     return memorySession;
   }
@@ -240,7 +327,7 @@ export function updateUserProfile(
   }
 
   const current = getCurrentUser();
-  if (current && (current.userId === userId || !idx)) {
+  if (current && (current.userId === userId || idx === -1)) {
     if (updatedName) {
       current.name = updatedName;
     }
@@ -249,6 +336,7 @@ export function updateUserProfile(
       try {
         localStorage.setItem(SESSION_KEY, JSON.stringify(current));
       } catch {}
+      setSessionCookie(current);
     }
     return { success: true, user: current };
   }
@@ -265,6 +353,7 @@ export function updateUserProfile(
       try {
         localStorage.setItem(SESSION_KEY, JSON.stringify(session));
       } catch {}
+      setSessionCookie(session);
     }
     return { success: true, user: session };
   }

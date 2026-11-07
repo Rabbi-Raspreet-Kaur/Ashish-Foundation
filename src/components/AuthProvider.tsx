@@ -10,13 +10,13 @@ import {
 } from "react";
 import {
   type AuthSession,
+  type UserRole,
   getCurrentUser,
   login as authLogin,
   signup as authSignup,
   logout as authLogout,
   updateUserProfile,
-  seedAdmin,
-  ADMIN_CONFIG,
+  HARDCODED_ADMIN,
 } from "@/lib/auth";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase/client";
 
@@ -24,7 +24,11 @@ interface AuthContextType {
   user: AuthSession | null;
   loading: boolean;
   isAdmin: boolean;
-  login: (email: string, password: string) => { success: boolean; error?: string; user?: AuthSession };
+  login: (
+    email: string,
+    password: string,
+    role?: UserRole
+  ) => { success: boolean; error?: string; user?: AuthSession };
   signup: (data: { name: string; email: string; password: string }) => {
     success: boolean;
     error?: string;
@@ -43,7 +47,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthSession | null>(() => {
     if (typeof window !== "undefined") {
-      seedAdmin();
       return getCurrentUser();
     }
     return null;
@@ -52,7 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const resolveRole = useCallback((email: string, appRole?: string): "admin" | "user" => {
     if (appRole === "admin") return "admin";
-    if (email.toLowerCase() === ADMIN_CONFIG.email.toLowerCase()) return "admin";
+    if (email.toLowerCase() === HARDCODED_ADMIN.email.toLowerCase()) return "admin";
     return "user"; // Safe default: NEVER default to admin
   }, []);
 
@@ -97,29 +100,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [resolveRole]);
 
-  const login = useCallback((email: string, password: string) => {
-    const result = authLogin(email, password);
-    if (result.success && result.user) {
-      setUser(result.user);
-    }
+  const login = useCallback(
+    (email: string, password: string, role: UserRole = "user") => {
+      const result = authLogin(email, password, role);
+      if (result.success && result.user) {
+        setUser(result.user);
+      }
 
-    if (isSupabaseConfigured()) {
-      supabase.auth.signInWithPassword({ email, password }).then(({ data, error }) => {
-        if (!error && data.user) {
-          const userEmail = data.user.email || email;
-          const role = resolveRole(userEmail, data.user.app_metadata?.role);
-          setUser({
-            userId: data.user.id,
-            email: userEmail,
-            name: data.user.user_metadata?.name || userEmail,
-            role,
-          });
-        }
-      }).catch(() => {});
-    }
+      if (isSupabaseConfigured() && role === "user") {
+        supabase.auth.signInWithPassword({ email, password }).then(({ data, error }) => {
+          if (!error && data.user) {
+            const userEmail = data.user.email || email;
+            const userRole = resolveRole(userEmail, data.user.app_metadata?.role);
+            setUser({
+              userId: data.user.id,
+              email: userEmail,
+              name: data.user.user_metadata?.name || userEmail,
+              role: userRole,
+            });
+          }
+        }).catch(() => {});
+      }
 
-    return { success: result.success, error: result.error, user: result.user };
-  }, [resolveRole]);
+      return { success: result.success, error: result.error, user: result.user };
+    },
+    [resolveRole]
+  );
 
   const signup = useCallback(
     (data: { name: string; email: string; password: string }) => {
