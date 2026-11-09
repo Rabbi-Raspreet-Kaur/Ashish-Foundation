@@ -54,9 +54,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       if (!user) {
         router.push("/login");
       } else if (!isAdmin) {
-        // Automatically redirect normal user to their user dashboard
+        // Automatically redirect normal user to public home page
         const timer = setTimeout(() => {
-          router.push("/user/dashboard");
+          router.push("/");
         }, 1500);
         return () => clearTimeout(timer);
       }
@@ -101,15 +101,15 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             Administrator Privileges Required
           </h1>
           <p className="text-sm text-charcoal-light mb-6">
-            You are signed in as <span className="font-semibold text-charcoal">{user.email}</span> with standard user access. This administrative portal is restricted to authorized Ashish Foundation personnel. Redirecting to your dashboard...
+            You are signed in as <span className="font-semibold text-charcoal">{user.email}</span> with standard user access. This administrative portal is restricted to authorized Ashish Foundation personnel. Redirecting to home...
           </p>
           <div className="space-y-3">
             <Link
-              href="/user/dashboard"
+              href="/"
               className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 bg-forest hover:bg-forest-light text-white font-medium rounded-full transition-all duration-200"
             >
               <ArrowLeft className="w-4 h-4" />
-              Go to User Dashboard
+              Return to Public Home
             </Link>
             <button
               onClick={() => {

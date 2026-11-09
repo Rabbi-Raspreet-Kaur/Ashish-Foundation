@@ -184,20 +184,21 @@ export default function UserDashboardPage() {
       {/* Tab 1: Overview */}
       {activeTab === "overview" && (
         <div className="space-y-6">
-          {/* 2-Column Desktop Layout: Left = metrics + account; Right = events + privacy */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main content 2-column layout on desktop: Left = metrics & activity; Right = account & privacy */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
-            {/* ── LEFT COLUMN (lg:col-span-2): Stat Cards + Account Details ── */}
+            {/* ── LEFT COLUMN (lg:col-span-2): Primary Metrics + User Activity ── */}
             <div className="lg:col-span-2 space-y-6">
 
-              {/* Stat Cards — Total Contributed & Donation Count */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {/* 3-Card Responsive Metric Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* 1. Total Contributed */}
                 <div className="bg-white rounded-2xl p-5 border border-forest/5 shadow-sm">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-semibold text-charcoal-light uppercase tracking-wider">
+                    <span className="text-[11px] font-semibold text-charcoal-light uppercase tracking-wider">
                       Total Contributed
                     </span>
-                    <div className="w-9 h-9 rounded-xl bg-saffron/10 text-saffron flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-xl bg-saffron/10 text-saffron flex items-center justify-center">
                       <IndianRupee className="w-4 h-4" />
                     </div>
                   </div>
@@ -212,12 +213,13 @@ export default function UserDashboardPage() {
                   </p>
                 </div>
 
+                {/* 2. Donation Count */}
                 <div className="bg-white rounded-2xl p-5 border border-forest/5 shadow-sm">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-semibold text-charcoal-light uppercase tracking-wider">
+                    <span className="text-[11px] font-semibold text-charcoal-light uppercase tracking-wider">
                       Donation Count
                     </span>
-                    <div className="w-9 h-9 rounded-xl bg-forest/10 text-forest flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-xl bg-forest/10 text-forest flex items-center justify-center">
                       <Heart className="w-4 h-4" />
                     </div>
                   </div>
@@ -227,43 +229,174 @@ export default function UserDashboardPage() {
                   >
                     {userDonations.length}
                   </div>
-                  <p className="text-[11px] text-charcoal-light mt-1">
-                    {pendingCount > 0 ? `${pendingCount} awaiting receipt review` : "All donations accounted for"}
+                  <p
+                    className="text-[11px] text-charcoal-light mt-1 truncate"
+                    title={pendingCount > 0 ? `${pendingCount} awaiting receipt review` : "All donations accounted for"}
+                  >
+                    {pendingCount > 0 ? `${pendingCount} awaiting review` : "All accounted for"}
+                  </p>
+                </div>
+
+                {/* 3. Events Attending */}
+                <div className="bg-white rounded-2xl p-5 border border-forest/5 shadow-sm">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[11px] font-semibold text-charcoal-light uppercase tracking-wider">
+                      Events Attending
+                    </span>
+                    <div className="w-8 h-8 rounded-xl bg-green/10 text-green flex items-center justify-center">
+                      <Calendar className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <div
+                    className="text-2xl font-bold text-forest"
+                    style={{ fontFamily: "var(--font-heading)" }}
+                  >
+                    {userEvents.length}
+                  </div>
+                  <p className="text-[11px] text-charcoal-light mt-1 truncate">
+                    Community camps &amp; drives
                   </p>
                 </div>
               </div>
 
-              {/* Account Details Card */}
+              {/* User Activity & Giving History Section */}
               <div className="bg-white rounded-2xl p-6 border border-forest/5 shadow-sm space-y-4">
-                <h2
-                  className="text-base font-bold text-forest"
-                  style={{ fontFamily: "var(--font-heading)" }}
-                >
-                  Account Details
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                  <div className="p-3.5 bg-offwhite rounded-xl">
-                    <span className="text-charcoal-light uppercase tracking-wider block mb-1">
+                <div className="flex items-center justify-between border-b border-forest/5 pb-3">
+                  <div>
+                    <h2
+                      className="text-base font-bold text-forest"
+                      style={{ fontFamily: "var(--font-heading)" }}
+                    >
+                      Recent Giving &amp; Activity
+                    </h2>
+                    <p className="text-xs text-charcoal-light">
+                      Your recent contributions and pledges
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setActiveTab("donations")}
+                    className="text-xs font-semibold text-forest hover:text-green inline-flex items-center gap-1 transition-colors"
+                  >
+                    View All Giving <ArrowRight className="w-3 h-3" />
+                  </button>
+                </div>
+
+                {loadingDonations ? (
+                  <div className="py-8 text-center text-xs text-charcoal-light">
+                    Loading your activity...
+                  </div>
+                ) : userDonations.length === 0 ? (
+                  <div className="py-8 text-center bg-offwhite/50 rounded-xl border border-dashed border-forest/10 p-5">
+                    <div className="w-10 h-10 rounded-xl bg-saffron/10 text-saffron flex items-center justify-center mx-auto mb-2">
+                      <Heart className="w-5 h-5" />
+                    </div>
+                    <p className="text-xs font-semibold text-forest mb-1">
+                      No Contribution History Yet
+                    </p>
+                    <p className="text-[11px] text-charcoal-light max-w-sm mx-auto mb-3">
+                      When you make a donation via our verified UPI QR code, your receipts and confirmation will appear here.
+                    </p>
+                    <button
+                      onClick={() => setShowDonateModal(true)}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-forest hover:bg-forest-light text-white font-semibold text-xs rounded-full transition-colors"
+                    >
+                      <Heart className="w-3.5 h-3.5" />
+                      Make a Contribution
+                    </button>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead>
+                        <tr className="border-b border-forest/10 text-charcoal-light uppercase tracking-wider font-semibold">
+                          <th className="py-2.5 px-3">Date</th>
+                          <th className="py-2.5 px-3">Amount</th>
+                          <th className="py-2.5 px-3">Status</th>
+                          <th className="py-2.5 px-3">Verification</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-forest/5">
+                        {userDonations.slice(0, 4).map((d) => (
+                          <tr key={d.id} className="hover:bg-offwhite/50 transition-colors">
+                            <td className="py-3 px-3 text-charcoal font-medium">
+                              {new Date(d.date).toLocaleDateString("en-IN", {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              })}
+                            </td>
+                            <td className="py-3 px-3 font-semibold text-forest text-sm">
+                              ₹{d.amount.toLocaleString("en-IN")}
+                            </td>
+                            <td className="py-3 px-3">
+                              {d.status === "completed" ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green/10 text-green font-semibold rounded-full text-[10px]">
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  Completed
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-600 font-semibold rounded-full text-[10px]">
+                                  <Clock className="w-3 h-3" />
+                                  Pending Review
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-3 px-3 text-charcoal-light text-[11px]">
+                              {d.status === "completed" ? "Verified by Foundation" : "Under reconciliation"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* ── RIGHT COLUMN (lg:col-span-1): Account Details + Role-Based Privacy ── */}
+            <div className="space-y-6">
+
+              {/* Account Details / Profile Card */}
+              <div className="bg-white rounded-2xl p-6 border border-forest/5 shadow-sm space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2
+                    className="text-base font-bold text-forest flex items-center gap-2"
+                    style={{ fontFamily: "var(--font-heading)" }}
+                  >
+                    <User className="w-4 h-4 text-forest" />
+                    Account Details
+                  </h2>
+                  <button
+                    onClick={() => setActiveTab("profile")}
+                    className="text-xs font-semibold text-saffron hover:text-saffron-dark transition-colors"
+                  >
+                    Edit Profile
+                  </button>
+                </div>
+
+                <div className="space-y-3 text-xs">
+                  <div className="p-3 bg-offwhite rounded-xl">
+                    <span className="text-[11px] text-charcoal-light uppercase tracking-wider block mb-0.5">
                       Display Name
                     </span>
                     <span className="font-semibold text-charcoal text-sm">{user?.name}</span>
                   </div>
-                  <div className="p-3.5 bg-offwhite rounded-xl">
-                    <span className="text-charcoal-light uppercase tracking-wider block mb-1">
+                  <div className="p-3 bg-offwhite rounded-xl">
+                    <span className="text-[11px] text-charcoal-light uppercase tracking-wider block mb-0.5">
                       Registered Email
                     </span>
-                    <span className="font-semibold text-charcoal text-sm">{user?.email}</span>
+                    <span className="font-semibold text-charcoal text-sm break-all">{user?.email}</span>
                   </div>
-                  <div className="p-3.5 bg-offwhite rounded-xl">
-                    <span className="text-charcoal-light uppercase tracking-wider block mb-1">
+                  <div className="p-3 bg-offwhite rounded-xl">
+                    <span className="text-[11px] text-charcoal-light uppercase tracking-wider block mb-0.5">
                       Account Role
                     </span>
                     <span className="font-semibold text-forest text-sm capitalize">
                       {user?.role} (Standard User)
                     </span>
                   </div>
-                  <div className="p-3.5 bg-offwhite rounded-xl">
-                    <span className="text-charcoal-light uppercase tracking-wider block mb-1">
+                  <div className="p-3 bg-offwhite rounded-xl">
+                    <span className="text-[11px] text-charcoal-light uppercase tracking-wider block mb-0.5">
                       Access Level
                     </span>
                     <span className="font-semibold text-green text-sm">
@@ -272,34 +405,9 @@ export default function UserDashboardPage() {
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* ── RIGHT COLUMN (spans 1 column on desktop): Events Attending + Role-Based Privacy ── */}
-            <div className="space-y-6 flex flex-col">
-
-              {/* Events Attending Card */}
-              <div className="bg-white rounded-2xl p-5 border border-forest/5 shadow-sm">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-semibold text-charcoal-light uppercase tracking-wider">
-                    Events Attending
-                  </span>
-                  <div className="w-9 h-9 rounded-xl bg-green/10 text-green flex items-center justify-center">
-                    <Calendar className="w-4 h-4" />
-                  </div>
-                </div>
-                <div
-                  className="text-2xl font-bold text-forest"
-                  style={{ fontFamily: "var(--font-heading)" }}
-                >
-                  {userEvents.length}
-                </div>
-                <p className="text-[11px] text-charcoal-light mt-1">
-                  Community programmes &amp; camps
-                </p>
-              </div>
 
               {/* Role-Based Privacy Card */}
-              <div className="bg-forest/5 rounded-2xl p-6 border border-forest/10 flex-1 flex flex-col justify-between">
+              <div className="bg-forest/5 rounded-2xl p-6 border border-forest/10 flex flex-col justify-between">
                 <div>
                   <div className="w-10 h-10 rounded-xl bg-forest/10 text-forest flex items-center justify-center mb-3">
                     <Shield className="w-5 h-5" />
@@ -322,6 +430,7 @@ export default function UserDashboardPage() {
                 </Link>
               </div>
             </div>
+
           </div>
         </div>
       )}

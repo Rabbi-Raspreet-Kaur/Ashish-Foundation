@@ -40,41 +40,60 @@ export function proxy(request: NextRequest) {
     session.role &&
     session.email
   );
+  const isAdmin = session?.role === "admin";
+
   const isLoginPage = pathname === "/login";
   const isSignupPage = pathname === "/signup";
+  const isUserRoute = pathname.startsWith("/user");
+  const isAdminRoute = pathname.startsWith("/admin");
 
-  // 3. Unauthenticated route protection:
-  // ONLY /login and /signup are accessible without authenticating first.
-  // The landing page (/) and all internal application routes MUST NOT be accessible.
-  // Any unauthenticated attempt via URL bar or direct navigation immediately redirects to /login.
-  if (!isAuthenticated) {
-    if (isLoginPage || isSignupPage) {
-      return NextResponse.next();
-    }
-    const loginUrl = new URL("/login", request.url);
-    if (pathname !== "/") {
-      loginUrl.searchParams.set("redirect", pathname);
-    }
-    return NextResponse.redirect(loginUrl);
-  }
-
-  // 4. Authenticated access to auth pages:
-  // If already authenticated and visiting /login or /signup,
-  // redirect immediately based on role: admin -> /admin/dashboard, user -> /
+  // 3. Auth pages (/login, /signup):
+  // - Publicly accessible when unauthenticated.
+  // - If already authenticated: strictly redirect standard users to '/' and admins to '/admin/dashboard'.
   if (isLoginPage || isSignupPage) {
-    if (session?.role === "admin") {
-      return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+    if (isAuthenticated) {
+      if (isAdmin) {
+        return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+      }
+      return NextResponse.redirect(new URL("/", request.url));
     }
-    return NextResponse.redirect(new URL("/", request.url));
+    return NextResponse.next();
   }
 
-  // 5. Role-based Route Authorization:
-  // Admin portal routes (/admin and /admin/*) are strictly restricted for Admin only.
-  // If a standard regular user attempts to access any admin section, redirect to /user/dashboard.
-  if (pathname.startsWith("/admin") && session?.role !== "admin") {
-    return NextResponse.redirect(new URL("/user/dashboard", request.url));
+  // 4. Admin protected routes (/admin and /admin/*):
+  // - Requires both an active authenticated session AND role === 'admin'.
+  // - If unauthenticated: redirect to /login with return URL.
+  // - If authenticated standard user: redirect to '/' (home).
+  if (isAdminRoute) {
+    if (pathname === "/admin/login") {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+    if (!isAuthenticated) {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+    if (!isAdmin) {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+    return NextResponse.next();
   }
 
+  // 5. User protected routes (/user and /user/*):
+  // - Requires a valid logged-in session.
+  // - If unauthenticated: redirect to /login with return URL.
+  if (isUserRoute) {
+    if (!isAuthenticated) {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+    return NextResponse.next();
+  }
+
+  // 6. Public routes (allow unauthenticated access):
+  // - '/' (Home page)
+  // - Public informational pages (/about, /contact, /gallery, /transparency, etc.)
   return NextResponse.next();
 }
 

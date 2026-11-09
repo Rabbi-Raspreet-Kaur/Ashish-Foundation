@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test": "node --experimental-strip-types scripts/test-auth-and-routes.mjs && node scripts/validate-qr.mjs",
     "test:auth": "node --experimental-strip-types scripts/test-auth-and-routes.mjs",
+    "test:security": "node scripts/test-route-security.mjs",
     "validate:qr": "node scripts/validate-qr.mjs"
   },
   "dependencies": {
