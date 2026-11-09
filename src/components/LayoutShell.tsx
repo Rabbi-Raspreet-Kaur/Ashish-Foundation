@@ -23,11 +23,11 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
         // Unauthenticated access -> immediately redirect to login
         router.replace("/login");
       } else if (user && isAuthPage) {
-        // Authenticated users cannot stay on login/signup -> redirect to dashboard
-        if (isAdmin) {
+        // Authenticated users cannot stay on login/signup -> redirect to dashboard (admin) or home (user)
+        if (isAdmin || user.role === "admin") {
           router.replace("/admin/dashboard");
         } else {
-          router.replace("/user/dashboard");
+          router.replace("/");
         }
       }
     }

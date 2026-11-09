@@ -1,0 +1,86 @@
+# Ashish Foundation - Local Development Guide
+
+## Prerequisites
+- Node.js (v20+ or v22+)
+- npm (v10+)
+
+---
+
+## 1. Environment Setup
+Before running the application, ensure you have your local environment file configured:
+
+```bash
+# Copy example configuration to .env.local (if not already created)
+cp .env.example .env.local
+```
+
+Key environment variables:
+- `NEXT_PUBLIC_UPI_ID`: Verified UPI ID for donations (e.g., 8299052548m@pnb)
+- `NEXT_PUBLIC_UPI_NAME`: Recipient / Payee Name (e.g., "Ashish Foundation")
+- `NEXT_PUBLIC_UPI_VERIFIED`: Set to "true" after account owner verification
+- `NEXT_PUBLIC_SUPABASE_URL`: Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: Supabase anon/publishable API key
+
+---
+
+## 2. Install Dependencies
+Install all required npm packages:
+
+```bash
+npm install
+```
+
+---
+
+## 3. Run on Localhost (Development Server)
+To start the Next.js local development server:
+
+```bash
+npm run dev
+```
+
+Once running, access the application in your browser at:
+`http://localhost:3000`
+
+### Optional: Run on a Different Port
+If port 3000 is occupied, you can specify a different port:
+
+```bash
+npm run dev -- -p 3001
+# or
+PORT=3001 npm run dev
+```
+
+---
+
+## 4. Production Build & Start
+To test the production build locally:
+
+```bash
+# Build the project
+npm run build
+
+# Start the production server on localhost:3000
+npm run start
+```
+
+---
+
+## 5. Other Helpful Commands
+- Linting:
+  ```bash
+  npm run lint
+  ```
+- Run test suite:
+  ```bash
+  npm run test
+  ```
+- Test Auth & Routes:
+  ```bash
+  npm run test:auth
+  ```
+- Validate Donation QR Code:
+  ```bash
+  npm run validate:qr
+  ```
+

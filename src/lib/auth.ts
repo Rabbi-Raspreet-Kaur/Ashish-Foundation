@@ -317,7 +317,7 @@ export function updateUserProfile(
   const users = getUsers();
   const idx = users.findIndex((u) => u.id === userId);
 
-  let updatedName = data.name?.trim();
+  const updatedName = data.name?.trim();
 
   if (idx !== -1) {
     if (updatedName) {

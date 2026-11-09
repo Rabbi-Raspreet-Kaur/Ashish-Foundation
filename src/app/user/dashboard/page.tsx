@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import {
   User,
   Heart,
@@ -14,9 +13,7 @@ import {
   Save,
   Mail,
   Phone,
-  QrCode,
   ArrowRight,
-  ExternalLink,
   AlertCircle,
 } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
@@ -25,7 +22,7 @@ import { getEventRegistrations, type Donation, type EventRegistration } from "@/
 import UpiQrCode from "@/components/ui/UpiQrCode";
 
 export default function UserDashboardPage() {
-  const { user, updateProfile, isAdmin } = useAuth();
+  const { user, updateProfile } = useAuth();
   const [activeTab, setActiveTab] = useState<"overview" | "donations" | "events" | "profile">("overview");
 
   // Profile Form state
@@ -34,6 +31,13 @@ export default function UserDashboardPage() {
   const [profileSaved, setProfileSaved] = useState(false);
   const [profileError, setProfileError] = useState("");
 
+  // Sync state if user changes
+  const [prevUserName, setPrevUserName] = useState(user?.name);
+  if (user?.name !== prevUserName) {
+    setPrevUserName(user?.name);
+    setName(user?.name || "");
+  }
+
   // Donations state
   const [userDonations, setUserDonations] = useState<Donation[]>([]);
   const [loadingDonations, setLoadingDonations] = useState(true);
@@ -41,12 +45,6 @@ export default function UserDashboardPage() {
 
   // Events state
   const [userEvents, setUserEvents] = useState<EventRegistration[]>([]);
-
-  useEffect(() => {
-    if (user?.name) {
-      setName(user.name);
-    }
-  }, [user]);
 
   // Load user-specific donations and event registrations
   useEffect(() => {
@@ -64,7 +62,9 @@ export default function UserDashboardPage() {
     try {
       const allRegs = getEventRegistrations();
       const filteredRegs = allRegs.filter((r) => r.email.toLowerCase() === userEmail);
-      setUserEvents(filteredRegs);
+      setTimeout(() => {
+        setUserEvents(filteredRegs);
+      }, 0);
     } catch {}
   }, [user]);
 
@@ -184,132 +184,143 @@ export default function UserDashboardPage() {
       {/* Tab 1: Overview */}
       {activeTab === "overview" && (
         <div className="space-y-6">
-          {/* Stat Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-            <div className="bg-white rounded-2xl p-5 border border-forest/5 shadow-sm">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-semibold text-charcoal-light uppercase tracking-wider">
-                  Total Contributed
-                </span>
-                <div className="w-9 h-9 rounded-xl bg-saffron/10 text-saffron flex items-center justify-center">
-                  <IndianRupee className="w-4 h-4" />
-                </div>
-              </div>
-              <div
-                className="text-2xl font-bold text-forest"
-                style={{ fontFamily: "var(--font-heading)" }}
-              >
-                ₹{totalDonated.toLocaleString("en-IN")}
-              </div>
-              <p className="text-[11px] text-charcoal-light mt-1">
-                Verified: ₹{completedDonated.toLocaleString("en-IN")}
-              </p>
-            </div>
-
-            <div className="bg-white rounded-2xl p-5 border border-forest/5 shadow-sm">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-semibold text-charcoal-light uppercase tracking-wider">
-                  Donation Count
-                </span>
-                <div className="w-9 h-9 rounded-xl bg-forest/10 text-forest flex items-center justify-center">
-                  <Heart className="w-4 h-4" />
-                </div>
-              </div>
-              <div
-                className="text-2xl font-bold text-forest"
-                style={{ fontFamily: "var(--font-heading)" }}
-              >
-                {userDonations.length}
-              </div>
-              <p className="text-[11px] text-charcoal-light mt-1">
-                {pendingCount > 0 ? `${pendingCount} awaiting receipt review` : "All donations accounted for"}
-              </p>
-            </div>
-
-            <div className="bg-white rounded-2xl p-5 border border-forest/5 shadow-sm">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-semibold text-charcoal-light uppercase tracking-wider">
-                  Events Attending
-                </span>
-                <div className="w-9 h-9 rounded-xl bg-green/10 text-green flex items-center justify-center">
-                  <Calendar className="w-4 h-4" />
-                </div>
-              </div>
-              <div
-                className="text-2xl font-bold text-forest"
-                style={{ fontFamily: "var(--font-heading)" }}
-              >
-                {userEvents.length}
-              </div>
-              <p className="text-[11px] text-charcoal-light mt-1">
-                Community programmes & camps
-              </p>
-            </div>
-          </div>
-
-          {/* Quick Profile Summary & Security Notice */}
+          {/* 2-Column Desktop Layout: Left = metrics + account; Right = events + privacy */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 bg-white rounded-2xl p-6 border border-forest/5 shadow-sm space-y-4">
-              <h2
-                className="text-base font-bold text-forest"
-                style={{ fontFamily: "var(--font-heading)" }}
-              >
-                Account Details
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                <div className="p-3.5 bg-offwhite rounded-xl">
-                  <span className="text-charcoal-light uppercase tracking-wider block mb-1">
-                    Display Name
-                  </span>
-                  <span className="font-semibold text-charcoal text-sm">{user?.name}</span>
+
+            {/* ── LEFT COLUMN (lg:col-span-2): Stat Cards + Account Details ── */}
+            <div className="lg:col-span-2 space-y-6">
+
+              {/* Stat Cards — Total Contributed & Donation Count */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div className="bg-white rounded-2xl p-5 border border-forest/5 shadow-sm">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-semibold text-charcoal-light uppercase tracking-wider">
+                      Total Contributed
+                    </span>
+                    <div className="w-9 h-9 rounded-xl bg-saffron/10 text-saffron flex items-center justify-center">
+                      <IndianRupee className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <div
+                    className="text-2xl font-bold text-forest"
+                    style={{ fontFamily: "var(--font-heading)" }}
+                  >
+                    ₹{totalDonated.toLocaleString("en-IN")}
+                  </div>
+                  <p className="text-[11px] text-charcoal-light mt-1">
+                    Verified: ₹{completedDonated.toLocaleString("en-IN")}
+                  </p>
                 </div>
-                <div className="p-3.5 bg-offwhite rounded-xl">
-                  <span className="text-charcoal-light uppercase tracking-wider block mb-1">
-                    Registered Email
-                  </span>
-                  <span className="font-semibold text-charcoal text-sm">{user?.email}</span>
-                </div>
-                <div className="p-3.5 bg-offwhite rounded-xl">
-                  <span className="text-charcoal-light uppercase tracking-wider block mb-1">
-                    Account Role
-                  </span>
-                  <span className="font-semibold text-forest text-sm capitalize">
-                    {user?.role} (Standard User)
-                  </span>
-                </div>
-                <div className="p-3.5 bg-offwhite rounded-xl">
-                  <span className="text-charcoal-light uppercase tracking-wider block mb-1">
-                    Access Level
-                  </span>
-                  <span className="font-semibold text-green text-sm">
-                    Supporter & Donor Access
-                  </span>
+
+                <div className="bg-white rounded-2xl p-5 border border-forest/5 shadow-sm">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-semibold text-charcoal-light uppercase tracking-wider">
+                      Donation Count
+                    </span>
+                    <div className="w-9 h-9 rounded-xl bg-forest/10 text-forest flex items-center justify-center">
+                      <Heart className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <div
+                    className="text-2xl font-bold text-forest"
+                    style={{ fontFamily: "var(--font-heading)" }}
+                  >
+                    {userDonations.length}
+                  </div>
+                  <p className="text-[11px] text-charcoal-light mt-1">
+                    {pendingCount > 0 ? `${pendingCount} awaiting receipt review` : "All donations accounted for"}
+                  </p>
                 </div>
               </div>
-            </div>
 
-            {/* Standard User Security Notice */}
-            <div className="bg-forest/5 rounded-2xl p-6 border border-forest/10 flex flex-col justify-between">
-              <div>
-                <div className="w-10 h-10 rounded-xl bg-forest/10 text-forest flex items-center justify-center mb-3">
-                  <Shield className="w-5 h-5" />
-                </div>
-                <h3
-                  className="text-sm font-bold text-forest mb-1.5"
+              {/* Account Details Card */}
+              <div className="bg-white rounded-2xl p-6 border border-forest/5 shadow-sm space-y-4">
+                <h2
+                  className="text-base font-bold text-forest"
                   style={{ fontFamily: "var(--font-heading)" }}
                 >
-                  Role-Based Privacy
-                </h3>
-                <p className="text-xs text-charcoal-light leading-relaxed">
-                  You are signed in with standard user permissions. Administrative operations (such as publishing site content, updating verified records, and viewing other users) are strictly restricted to verified administrators.
+                  Account Details
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                  <div className="p-3.5 bg-offwhite rounded-xl">
+                    <span className="text-charcoal-light uppercase tracking-wider block mb-1">
+                      Display Name
+                    </span>
+                    <span className="font-semibold text-charcoal text-sm">{user?.name}</span>
+                  </div>
+                  <div className="p-3.5 bg-offwhite rounded-xl">
+                    <span className="text-charcoal-light uppercase tracking-wider block mb-1">
+                      Registered Email
+                    </span>
+                    <span className="font-semibold text-charcoal text-sm">{user?.email}</span>
+                  </div>
+                  <div className="p-3.5 bg-offwhite rounded-xl">
+                    <span className="text-charcoal-light uppercase tracking-wider block mb-1">
+                      Account Role
+                    </span>
+                    <span className="font-semibold text-forest text-sm capitalize">
+                      {user?.role} (Standard User)
+                    </span>
+                  </div>
+                  <div className="p-3.5 bg-offwhite rounded-xl">
+                    <span className="text-charcoal-light uppercase tracking-wider block mb-1">
+                      Access Level
+                    </span>
+                    <span className="font-semibold text-green text-sm">
+                      Supporter &amp; Donor Access
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ── RIGHT COLUMN (spans 1 column on desktop): Events Attending + Role-Based Privacy ── */}
+            <div className="space-y-6 flex flex-col">
+
+              {/* Events Attending Card */}
+              <div className="bg-white rounded-2xl p-5 border border-forest/5 shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-semibold text-charcoal-light uppercase tracking-wider">
+                    Events Attending
+                  </span>
+                  <div className="w-9 h-9 rounded-xl bg-green/10 text-green flex items-center justify-center">
+                    <Calendar className="w-4 h-4" />
+                  </div>
+                </div>
+                <div
+                  className="text-2xl font-bold text-forest"
+                  style={{ fontFamily: "var(--font-heading)" }}
+                >
+                  {userEvents.length}
+                </div>
+                <p className="text-[11px] text-charcoal-light mt-1">
+                  Community programmes &amp; camps
                 </p>
               </div>
-              <Link
-                href="/contact"
-                className="mt-4 text-xs font-semibold text-forest hover:text-green inline-flex items-center gap-1"
-              >
-                Need help or have questions? Contact us <ArrowRight className="w-3 h-3" />
-              </Link>
+
+              {/* Role-Based Privacy Card */}
+              <div className="bg-forest/5 rounded-2xl p-6 border border-forest/10 flex-1 flex flex-col justify-between">
+                <div>
+                  <div className="w-10 h-10 rounded-xl bg-forest/10 text-forest flex items-center justify-center mb-3">
+                    <Shield className="w-5 h-5" />
+                  </div>
+                  <h3
+                    className="text-sm font-bold text-forest mb-1.5"
+                    style={{ fontFamily: "var(--font-heading)" }}
+                  >
+                    Role-Based Privacy
+                  </h3>
+                  <p className="text-xs text-charcoal-light leading-relaxed">
+                    You are signed in with standard user permissions. Administrative operations (such as publishing site content, updating verified records, and viewing other users) are strictly restricted to verified administrators.
+                  </p>
+                </div>
+                <Link
+                  href="/contact"
+                  className="mt-4 text-xs font-semibold text-forest hover:text-green inline-flex items-center gap-1"
+                >
+                  Need help or have questions? Contact us <ArrowRight className="w-3 h-3" />
+                </Link>
+              </div>
             </div>
           </div>
         </div>

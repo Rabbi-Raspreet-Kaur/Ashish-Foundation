@@ -60,12 +60,12 @@ export function proxy(request: NextRequest) {
 
   // 4. Authenticated access to auth pages:
   // If already authenticated and visiting /login or /signup,
-  // redirect immediately to respective dashboard based on role.
+  // redirect immediately based on role: admin -> /admin/dashboard, user -> /
   if (isLoginPage || isSignupPage) {
     if (session?.role === "admin") {
       return NextResponse.redirect(new URL("/admin/dashboard", request.url));
     }
-    return NextResponse.redirect(new URL("/user/dashboard", request.url));
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   // 5. Role-based Route Authorization:

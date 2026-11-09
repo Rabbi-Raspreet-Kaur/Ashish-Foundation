@@ -31,6 +31,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showAdminEmail, setShowAdminEmail] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -39,16 +40,20 @@ export default function LoginPage() {
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotSent, setForgotSent] = useState(false);
 
-  // If already authenticated, redirect immediately based on role
+  // Fix #1 & #2: Redirect in useEffect (never in render body).
+  // Admins go to /admin/dashboard; standard users go to public home (/).
   useEffect(() => {
     if (user) {
-      if (isAdmin) {
+      if (isAdmin || user.role === "admin") {
         router.replace("/admin/dashboard");
       } else {
-        router.replace("/user/dashboard");
+        router.replace("/");
       }
     }
   }, [user, isAdmin, router]);
+
+  // While redirect is pending, avoid rendering login form
+  if (user) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,9 +64,11 @@ export default function LoginPage() {
       const result = login(email, password, selectedRole);
       if (result.success && result.user) {
         if (result.user.role === "admin") {
+          // Fix #2: Admins always go to their command portal
           router.push("/admin/dashboard");
         } else {
-          router.push("/user/dashboard");
+          // Fix #2: Standard users land on the public home page, not /user/dashboard
+          router.push("/");
         }
       } else {
         setError(
@@ -153,6 +160,7 @@ export default function LoginPage() {
                   checked={selectedRole === "user"}
                   onChange={() => {
                     setSelectedRole("user");
+                    setShowAdminEmail(false);
                     setError("");
                   }}
                   className="sr-only"
@@ -192,6 +200,7 @@ export default function LoginPage() {
                   checked={selectedRole === "admin"}
                   onChange={() => {
                     setSelectedRole("admin");
+                    setShowAdminEmail(false);
                     setError("");
                   }}
                   className="sr-only"
@@ -239,16 +248,39 @@ export default function LoginPage() {
               </label>
               <div className="relative">
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-charcoal-light/60" />
-                <input
-                  id="login-email"
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your.email@example.com"
-                  autoComplete="email"
-                  className="w-full pl-10 pr-4 py-3 bg-offwhite border border-forest/15 rounded-xl text-sm text-charcoal placeholder:text-charcoal-light/40 focus:outline-none focus:border-green focus:ring-2 focus:ring-green/15 transition-all"
-                />
+                {selectedRole === "admin" ? (
+                  <>
+                    <input
+                      id="login-email"
+                      type={showAdminEmail ? "text" : "password"}
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="••••••••••••••••••••"
+                      autoComplete="off"
+                      className="w-full pl-10 pr-11 py-3 bg-offwhite border border-forest/15 rounded-xl text-sm text-charcoal placeholder:text-charcoal-light/40 focus:outline-none focus:border-green focus:ring-2 focus:ring-green/15 transition-all"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowAdminEmail(!showAdminEmail)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-charcoal-light/60 hover:text-charcoal transition-colors p-1"
+                      aria-label={showAdminEmail ? "Hide email" : "Show email"}
+                    >
+                      {showAdminEmail ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </>
+                ) : (
+                  <input
+                    id="login-email"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="your.email@example.com"
+                    autoComplete="email"
+                    className="w-full pl-10 pr-4 py-3 bg-offwhite border border-forest/15 rounded-xl text-sm text-charcoal placeholder:text-charcoal-light/40 focus:outline-none focus:border-green focus:ring-2 focus:ring-green/15 transition-all"
+                  />
+                )}
               </div>
             </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -28,15 +28,20 @@ export default function SignupPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // If already logged in, redirect safely according to role
-  if (user) {
-    if (isAdmin) {
-      router.push("/admin/dashboard");
-    } else {
-      router.push("/user/dashboard");
+  // Fix #1 & #2: Move redirect out of render body into useEffect.
+  // Admins go to /admin/dashboard; standard users go to public home (/).
+  useEffect(() => {
+    if (user) {
+      if (isAdmin || user.role === "admin") {
+        router.replace("/admin/dashboard");
+      } else {
+        router.replace("/");
+      }
     }
-    return null;
-  }
+  }, [user, isAdmin, router]);
+
+  // While redirect is pending, render nothing to avoid flash
+  if (user) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,8 +62,12 @@ export default function SignupPage() {
       // signup enforces role: "user" on the backend/auth utility
       const result = signup({ name, email, password });
       if (result.success) {
-        // Normal public accounts are redirected to their User Dashboard, NEVER to admin
-        router.push("/user/dashboard");
+        if (result.user?.role === "admin") {
+          router.push("/admin/dashboard");
+        } else {
+          // Fix #2: Standard users strictly land on the public home page after signup
+          router.push("/");
+        }
       } else {
         setError(result.error || "Signup failed.");
       }
