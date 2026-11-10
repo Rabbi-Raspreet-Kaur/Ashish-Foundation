@@ -52,7 +52,7 @@ async function verifyServerAvailable() {
   try {
     const res = await fetch(TARGET_URL, { redirect: "manual" });
     return res.status > 0;
-  } catch (err) {
+  } catch {
     return false;
   }
 }

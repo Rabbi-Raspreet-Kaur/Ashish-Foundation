@@ -4,11 +4,11 @@ import type { NextRequest } from "next/server";
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // 1. Allow public static assets, images, next internal files, and favicon
+  // Immediate bypass for Next.js internal assets, auth API, static files, and media
   if (
     pathname.startsWith("/_next") ||
+    pathname.startsWith("/api/auth") ||
     pathname.startsWith("/images") ||
-    pathname.startsWith("/api") ||
     pathname.includes(".") ||
     pathname === "/favicon.ico" ||
     pathname === "/sitemap.xml" ||
@@ -101,13 +101,7 @@ export default proxy;
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    "/((?!_next/static|_next/image|favicon.ico).*)",
+    "/((?!_next/static|_next/image|favicon.ico|images|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js)$).*)",
   ],
 };
 
