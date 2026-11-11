@@ -80,11 +80,6 @@ try {
   console.log(`GET /contact -> status ${contactRes.status}, location: ${contactRes.location}`);
   assert.strictEqual(contactRes.status, 307, "/contact must redirect to /login");
 
-  // 5. /transparency must redirect to /login
-  const transRes = await testRoute("/transparency");
-  console.log(`GET /transparency -> status ${transRes.status}, location: ${transRes.location}`);
-  assert.strictEqual(transRes.status, 307, "/transparency must redirect to /login");
-
   // 6. /admin/dashboard must redirect to /login
   const adminDashRes = await testRoute("/admin/dashboard");
   console.log(`GET /admin/dashboard -> status ${adminDashRes.status}, location: ${adminDashRes.location}`);

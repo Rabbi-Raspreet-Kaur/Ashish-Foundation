@@ -28,7 +28,6 @@ check("Navbar contains Impact", navLabels.includes("Impact"));
 check("Navbar contains Stories", navLabels.includes("Stories"));
 check("Navbar contains Events", navLabels.includes("Events"));
 check("Navbar contains Gallery", navLabels.includes("Gallery"));
-check("Navbar contains Transparency", navLabels.includes("Transparency"));
 check("Navbar contains Contact", navLabels.includes("Contact"));
 check("Navbar does NOT expose Admin controls to public visitors", !navLabels.includes("Admin") && !navLabels.includes("Admin Dashboard"));
 

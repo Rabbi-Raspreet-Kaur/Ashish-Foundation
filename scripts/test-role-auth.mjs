@@ -42,7 +42,6 @@ check("Navbar has Impact", navLabels.includes("Impact"));
 check("Navbar has Stories", navLabels.includes("Stories"));
 check("Navbar has Events", navLabels.includes("Events"));
 check("Navbar has Gallery", navLabels.includes("Gallery"));
-check("Navbar has Transparency", navLabels.includes("Transparency"));
 check("Navbar has Contact", navLabels.includes("Contact"));
 check("NAV_LINKS does NOT contain Admin Dashboard", !navLabels.includes("Admin Dashboard") && !navLabels.includes("Admin"));
 

@@ -21,7 +21,6 @@ const footerLinks = [
       { label: "Our Work", href: "/#our-work" },
       { label: "Impact", href: "/#impact" },
       { label: "Stories", href: "/#stories" },
-      { label: "Transparency", href: "/transparency" },
     ],
   },
   {
@@ -38,7 +37,6 @@ const footerLinks = [
     title: "Resources",
     links: [
       { label: "Gallery", href: "/gallery" },
-      { label: "Annual Reports", href: "/transparency" },
       { label: "Member Login", href: "/login" },
       { label: "Privacy Policy", href: "#" },
       { label: "Terms of Use", href: "#" },

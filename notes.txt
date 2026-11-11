@@ -84,3 +84,5 @@ npm run start
   npm run validate:qr
   ```
 
+./cloudflared tunnel --url http://localhost:3000
+npm run dev -- -H 0.0.0.0 -p 3000

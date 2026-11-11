@@ -93,7 +93,7 @@ export function proxy(request: NextRequest) {
 
   // 6. Public routes (allow unauthenticated access):
   // - '/' (Home page)
-  // - Public informational pages (/about, /contact, /gallery, /transparency, etc.)
+  // - Public informational pages (/about, /contact, /gallery, etc.)
   return NextResponse.next();
 }
 
